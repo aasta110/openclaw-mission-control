@@ -11,15 +11,6 @@
 /.next/
 /out/
 
-# Mission Control runtime data (local-only)
-/data/**
-!/data/.gitkeep
-
-# Local scratch scripts / temp dirs
-/tmp/
-/dispatcher-tick.js
-/dispatcher_tick.js
-
 # production
 /build
 
@@ -42,3 +33,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Mission Control runtime data (local-only)
+/data/**
+!/data/.gitkeep
+
+# Local scratch scripts / temp dirs
+/tmp/
+/dispatcher-tick.js
+/dispatcher_tick.js
