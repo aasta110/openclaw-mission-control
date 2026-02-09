@@ -82,7 +82,22 @@ export default function TaskCard({ task, isDragging = false }: TaskCardProps) {
 
         {/* Priority and Tags row */}
         <div className="flex items-center justify-between gap-2 mb-3">
-          <PriorityBadge priority={task.priority} size="sm" />
+          <div className="flex items-center gap-2">
+            <PriorityBadge priority={task.priority} size="sm" />
+            {task.status === 'review' && (
+              <span
+                className={`font-mono text-[10px] px-2 py-0.5 rounded-md tracking-wider uppercase border ${
+                  task.reviewStatus === 'approved'
+                    ? 'bg-success/10 text-success border-success/30'
+                    : task.reviewStatus === 'changes_requested'
+                    ? 'bg-danger/10 text-danger border-danger/30'
+                    : 'bg-warning/10 text-warning border-warning/30'
+                }`}
+              >
+                {task.reviewStatus || 'pending'}
+              </span>
+            )}
+          </div>
           
           {task.tags.length > 0 && (
             <div className="flex items-center gap-1.5 flex-wrap justify-end">

@@ -2,6 +2,7 @@ import { AGENT_CONFIG, AgentId } from './config';
 
 export type { AgentId } from './config';
 export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
+export type ReviewStatus = 'pending' | 'approved' | 'changes_requested';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type AgentStatus = 'active' | 'working' | 'idle' | 'offline';
 export type WorkLogAction = 'picked' | 'progress' | 'blocked' | 'completed' | 'dropped';
@@ -64,6 +65,12 @@ export interface Task {
   deliverable?: string; // DEPRECATED: Use deliverables instead. Kept for backward compatibility
   deliverables?: string[]; // Array of file paths to the outputs
 
+  // Review gate
+  reviewStatus?: ReviewStatus; // pending | approved | changes_requested
+  reviewedBy?: AgentId;
+  reviewedAt?: string;
+  reviewNotes?: string;
+
   // Orchestration
   parentId?: string; // if set, this task is a child/subtask of parentId
 }
@@ -112,6 +119,12 @@ export interface SerializedTask {
   workLog: SerializedWorkLogEntry[];
   deliverable?: string; // DEPRECATED: Use deliverables instead. Kept for backward compatibility
   deliverables?: string[]; // Array of file paths to the outputs
+
+  // Review gate
+  reviewStatus?: ReviewStatus;
+  reviewedBy?: AgentId;
+  reviewedAt?: string;
+  reviewNotes?: string;
 
   parentId?: string;
 }
