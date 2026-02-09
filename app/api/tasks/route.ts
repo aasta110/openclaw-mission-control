@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTasks, createTask, serializeTask } from '@/lib/local-storage';
-import { TaskStatus, TaskPriority, AgentId } from '@/lib/types';
+import { addComment, createTask, getTasks, serializeTask, updateTask } from '@/lib/local-storage';
+import { AgentId, TaskPriority, TaskStatus } from '@/lib/types';
+import { AGENT_CONFIG } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,14 +12,26 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') as TaskStatus | null;
     const assignee = searchParams.get('assignee') as AgentId | null;
     const priority = searchParams.get('priority') as TaskPriority | null;
+    const parentId = searchParams.get('parentId');
 
     const filters: { status?: TaskStatus; assignee?: AgentId; priority?: TaskPriority } = {};
     if (status) filters.status = status;
     if (assignee) filters.assignee = assignee;
     if (priority) filters.priority = priority;
 
-    const tasks = await getTasks(Object.keys(filters).length > 0 ? filters : undefined);
-    
+    let tasks = await getTasks(Object.keys(filters).length > 0 ? filters : undefined);
+
+    if (parentId !== null) {
+      // parentId query supports:
+      // - parentId=<uuid>  → only children of that parent
+      // - parentId=none     → only top-level tasks (no parentId)
+      if (parentId === 'none') {
+        tasks = tasks.filter((t) => !t.parentId);
+      } else {
+        tasks = tasks.filter((t) => t.parentId === parentId);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       tasks: tasks.map(serializeTask),
@@ -63,6 +76,102 @@ export async function POST(request: NextRequest) {
       tags: tags || [],
       dueDate: dueDate ? new Date(dueDate) : undefined,
     });
+
+    // Auto-split: if a task is assigned to Atlas (main coordinator), create subtasks for the rest of the team.
+    // Auto-start: user requested that Mission Control starts automatically.
+    if ((assignee || null) === 'main') {
+      // Mark parent as TODO immediately.
+      await updateTask(task.id, { status: 'todo' });
+
+      await addComment(task.id, 'main',
+        'Auto-split started. Subtasks created and moved to TODO automatically.'
+      );
+
+      // Auto-split must include ALL configured agents (except Atlas/main)
+      const templates: Partial<Record<AgentId, { title: string; description: string }>> = {
+        claude1: {
+          title: 'Backend plan + interfaces',
+          description: `Define backend/API plan for: ${title}.\n\nContext:\n${description}`,
+        },
+        claude2: {
+          title: 'Frontend/UI plan + components',
+          description: `Define UI/component plan for: ${title}.\n\nContext:\n${description}`,
+        },
+        claude3: {
+          title: 'Security/DevOps checklist',
+          description: `Threat model + deployment/security checklist for: ${title}.\n\nContext:\n${description}`,
+        },
+        tanel: {
+          title: 'Project plan + acceptance criteria',
+          description: `Break into milestones and acceptance criteria for: ${title}.\n\nContext:\n${description}`,
+        },
+        gpt4research: {
+          title: 'Research/benchmarks',
+          description: `Find references/inspiration and pitfalls for: ${title}.\n\nContext:\n${description}`,
+        },
+        gpt4writing: {
+          title: 'Spec rewrite / crisp brief',
+          description: `Rewrite into crisp brief + requirements for: ${title}.\n\nContext:\n${description}`,
+        },
+        gpt4ux: {
+          title: 'UX flows + edge cases',
+          description: `User flows + edge cases for: ${title}.\n\nContext:\n${description}`,
+        },
+        gpt4seo: {
+          title: 'SEO considerations (if public)',
+          description: `If this is public-facing, list SEO items for: ${title}.\n\nContext:\n${description}`,
+        },
+        gpt4data: {
+          title: 'Analytics/telemetry events',
+          description: `Define analytics/event tracking for: ${title}.\n\nContext:\n${description}`,
+        },
+        gpt4test: {
+          title: 'Test plan',
+          description: `Write test plan + verification checklist for: ${title}.\n\nContext:\n${description}`,
+        },
+        gpt4content: {
+          title: 'Docs/changelog draft',
+          description: `Draft initial docs/changelog notes for: ${title}.\n\nContext:\n${description}`,
+        },
+      };
+
+      const children = AGENT_CONFIG.agents
+        .map((a) => a.id as AgentId)
+        .filter((id) => id !== 'main')
+        .map((id) => {
+          const tpl = templates[id];
+          if (!tpl) {
+            return {
+              assignee: id,
+              title: `${id} subtask`,
+              description: `Work on your part for: ${title}.\n\nContext:\n${description}`,
+            };
+          }
+          return { assignee: id, ...tpl };
+        });
+
+      for (const c of children) {
+        const child = await createTask({
+          title: c.title,
+          description: c.description,
+          priority,
+          assignee: c.assignee,
+          createdBy: 'main',
+          tags: [...(tags || []), 'auto-split'],
+          dueDate: dueDate ? new Date(dueDate) : undefined,
+          parentId: task.id,
+        });
+
+        // Child tasks start in TODO automatically (auto-start).
+        await updateTask(child.id, { status: 'todo' });
+      }
+
+      return NextResponse.json({
+        success: true,
+        task: serializeTask((await getTasks({}))?.find(t => t.id === task.id) || task),
+        autoSplit: true,
+      }, { status: 201 });
+    }
 
     return NextResponse.json({
       success: true,
