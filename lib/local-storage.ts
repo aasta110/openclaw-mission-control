@@ -123,6 +123,7 @@ export function serializeTask(task: Task): SerializedTask {
     dueDate: task.dueDate || undefined,
     deliverable: task.deliverable,
     deliverables: deliverables.length > 0 ? deliverables : undefined,
+    parentId: task.parentId,
     comments: task.comments.map((c) => ({
       ...c,
       createdAt: c.createdAt,
@@ -167,10 +168,13 @@ export async function getTasks(filters?: {
     tasks = tasks.filter((t) => t.priority === filters.priority);
   }
 
-  // Sort by createdAt descending
-  tasks.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  // Sort by column order first (ascending), then fallback to createdAt desc
+  tasks.sort((a, b) => {
+    const ao = typeof (a as any).order === 'number' ? (a as any).order : Number.MAX_SAFE_INTEGER;
+    const bo = typeof (b as any).order === 'number' ? (b as any).order : Number.MAX_SAFE_INTEGER;
+    if (ao !== bo) return ao - bo;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 
   return tasks;
 }
@@ -188,6 +192,7 @@ export async function createTask(data: {
   createdBy: string;
   tags?: string[];
   dueDate?: Date;
+  parentId?: string;
 }): Promise<Task> {
   const now = new Date().toISOString();
   const task: Task = {
@@ -200,9 +205,11 @@ export async function createTask(data: {
     createdBy: data.createdBy,
     createdAt: now,
     updatedAt: now,
+    order: Date.now(),
     tags: data.tags || [],
     comments: [],
     workLog: [],
+    ...(data.parentId ? { parentId: data.parentId } : {}),
     ...(data.dueDate && { dueDate: data.dueDate.toISOString() }),
   };
 
@@ -225,6 +232,7 @@ export async function updateTask(
     dueDate: Date | null;
     deliverable: string | null;
     deliverables: string[] | null;
+    order: number | null;
   }>,
 ): Promise<Task | null> {
   const tasks = await readTasks();
@@ -621,18 +629,53 @@ export function subscribeToAgents(
 
 export async function seedAgents(): Promise<void> {
   const existingAgents = await readAgents();
-  const existingIds = new Set(existingAgents.map((a) => a.id));
+  const byId = new Map(existingAgents.map((a) => [a.id, a] as const));
 
   let changed = false;
+  const now = new Date().toISOString();
+
   for (const agent of AGENTS) {
-    if (!existingIds.has(agent.id)) {
+    const existing = byId.get(agent.id);
+
+    if (!existing) {
       const agentData: Agent = {
         ...agent,
-        status: "active" as AgentStatus,
+        status: 'active' as AgentStatus,
         currentTask: null,
-        lastSeen: new Date().toISOString(),
+        lastSeen: now,
       };
       existingAgents.push(agentData);
+      byId.set(agent.id, agentData);
+      changed = true;
+      continue;
+    }
+
+    // Keep runtime fields (status/currentTask/lastSeen), but sync identity fields
+    const before = {
+      name: existing.name,
+      emoji: existing.emoji,
+      role: existing.role,
+      focus: existing.focus,
+    };
+
+    existing.name = agent.name;
+    existing.emoji = agent.emoji;
+    existing.role = agent.role;
+    existing.focus = agent.focus;
+
+    const after = {
+      name: existing.name,
+      emoji: existing.emoji,
+      role: existing.role,
+      focus: existing.focus,
+    };
+
+    if (
+      before.name !== after.name ||
+      before.emoji !== after.emoji ||
+      before.role !== after.role ||
+      before.focus !== after.focus
+    ) {
       changed = true;
     }
   }
