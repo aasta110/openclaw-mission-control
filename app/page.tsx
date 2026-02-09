@@ -54,11 +54,11 @@ export default function DashboardPage() {
           </div>
 
           <div className="text-center">
-            <p className="font-mono text-sm text-cyan tracking-wider uppercase animate-pulse">
-              Initializing System
+            <p className="font-display text-sm text-text-primary tracking-wide">
+              Loading Mission Control…
             </p>
-            <p className="font-mono text-xs text-text-muted mt-2">
-              Loading mission data...
+            <p className="font-body text-xs text-text-muted mt-2">
+              Fetching tasks and activity.
             </p>
           </div>
 
@@ -98,8 +98,8 @@ export default function DashboardPage() {
                 </svg>
               </div>
 
-              <h2 className="font-display text-xl font-bold text-text-primary mb-3 tracking-wider">
-                SYSTEM ERROR
+              <h2 className="font-display text-xl font-semibold text-text-primary mb-3 tracking-wide">
+                Something went wrong
               </h2>
               <p className="font-body text-text-secondary mb-2">{error}</p>
               <p className="font-mono text-xs text-text-muted mb-6">
@@ -112,7 +112,7 @@ export default function DashboardPage() {
 
               <button
                 onClick={() => window.location.reload()}
-                className="px-6 py-3 rounded-xl btn-glow text-void font-mono text-sm tracking-wider uppercase">
+                className="px-6 py-3 rounded-xl btn-glow text-void font-display text-sm tracking-wide">
                 Retry Connection
               </button>
             </div>
