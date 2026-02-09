@@ -14,9 +14,16 @@ export const dynamic = 'force-dynamic';
 const VALID_AGENTS: AgentId[] = AGENT_CONFIG.agents.map(a => a.id);
 
 // POST /api/tasks/[id]/comments - Add a comment with @mentions
+async function resolveTaskId(params: unknown): Promise<string> {
+  const p: any = typeof (params as any)?.then === 'function' ? await (params as any) : params;
+  const raw = p?.id;
+  const id = Array.isArray(raw) ? raw[0] : raw;
+  return String(id || '');
+}
+
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
     const body = await request.json();
@@ -45,8 +52,10 @@ export async function POST(
       );
     }
 
+    const taskId = await resolveTaskId(params);
+
     // Check if task exists
-    const task = await getTask(params.id);
+    const task = await getTask(taskId);
     if (!task) {
       return NextResponse.json(
         { success: false, error: 'Task not found' },
@@ -55,7 +64,7 @@ export async function POST(
     }
 
     // Add the comment
-    const result = await addCommentWithId(params.id, author.toLowerCase(), content);
+    const result = await addCommentWithId(taskId, author.toLowerCase(), content);
     if (!result) {
       return NextResponse.json(
         { success: false, error: 'Failed to add comment' },
@@ -71,7 +80,7 @@ export async function POST(
     // Create mention records for each mentioned agent
     for (const mentionedAgent of mentionedAgents) {
       await createMention({
-        taskId: params.id,
+        taskId,
         taskTitle: updatedTask.title,
         commentId,
         author: author.toLowerCase(),

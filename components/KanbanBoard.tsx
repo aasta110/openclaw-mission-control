@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   DndContext,
   DragOverlay,
-  closestCenter,
+  pointerWithin,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -13,7 +13,7 @@ import {
   DragEndEvent,
   DragOverEvent,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import {
   SerializedTask,
   TaskStatus,
@@ -88,22 +88,12 @@ export default function KanbanBoard({ initialTasks }: KanbanBoardProps) {
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
+    // NOTE: Don't mutate task.status during drag-over.
+    // If we do, by the time dragEnd runs the task already has newStatus,
+    // and the PATCH/logging won't fire (looks "broken").
+    // We only persist + update state on dragEnd.
+    const { over } = event;
     if (!over) return;
-
-    const activeId = active.id as string;
-    const overId = over.id as string;
-
-    // Check if dropping over a column
-    const isOverColumn = COLUMNS.some((col) => col.id === overId);
-    if (isOverColumn) {
-      const newStatus = overId as TaskStatus;
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === activeId ? { ...task, status: newStatus } : task,
-        ),
-      );
-    }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -131,13 +121,66 @@ export default function KanbanBoard({ initialTasks }: KanbanBoardProps) {
       }
     }
 
+    // If dropped over another task, reorder within that task's status column
+    const overTask = !isOverColumn ? tasks.find((t) => t.id === over.id) : null;
+    if (overTask) {
+      const columnStatus = overTask.status;
+      const columnTasks = tasks.filter((t) => t.status === columnStatus);
+      const oldIndex = columnTasks.findIndex((t) => t.id === taskId);
+      const newIndex = columnTasks.findIndex((t) => t.id === overTask.id);
+
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        const moved = arrayMove(columnTasks, oldIndex, newIndex).map((t, idx) => ({
+          ...t,
+          order: idx,
+        }));
+
+        // update local state
+        setTasks((prev) => {
+          const others = prev.filter((t) => t.status !== columnStatus);
+          return [...others, ...moved];
+        });
+
+        // persist order
+        await Promise.all(
+          moved.map((t) =>
+            fetch(`/api/tasks/${t.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ order: t.order }),
+            }),
+          ),
+        );
+
+        return;
+      }
+    }
+
     if (newStatus && newStatus !== task.status) {
-      // Update task status via API
+      // Update task status via API (and set a new order at the end of the target column)
       try {
+        const targetOrders = tasks
+          .filter((t) => t.status === newStatus)
+          .map((t) => (typeof (t as any).order === 'number' ? (t as any).order : 0));
+        const nextOrder = (targetOrders.length ? Math.max(...targetOrders) : 0) + 1;
+
         const response = await fetch(`/api/tasks/${taskId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
+          body: JSON.stringify({ status: newStatus, order: nextOrder }),
+        });
+
+        // log UI move event
+        await fetch('/api/events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: 'ui',
+            type: 'task.moved',
+            taskId,
+            message: `${task.title} → ${newStatus}`,
+            data: { from: task.status, to: newStatus, taskTitle: task.title },
+          }),
         });
 
         if (!response.ok) {
@@ -145,6 +188,13 @@ export default function KanbanBoard({ initialTasks }: KanbanBoardProps) {
           setTasks((prev) =>
             prev.map((t) =>
               t.id === taskId ? { ...t, status: task.status } : t,
+            ),
+          );
+        } else {
+          // Update local state immediately so moving back/forth works without waiting for polling
+          setTasks((prev) =>
+            prev.map((t) =>
+              t.id === taskId ? { ...t, status: newStatus, order: nextOrder } : t,
             ),
           );
         }
@@ -222,7 +272,7 @@ export default function KanbanBoard({ initialTasks }: KanbanBoardProps) {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={pointerWithin}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}>

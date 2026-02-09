@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { completeTask, serializeTask } from '@/lib/local-storage';
 import { AgentId } from '@/lib/types';
+import { AGENT_CONFIG } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
+
+async function resolveTaskId(params: unknown): Promise<string> {
+  const p: any = typeof (params as any)?.then === 'function' ? await (params as any) : params;
+  const raw = p?.id;
+  const id = Array.isArray(raw) ? raw[0] : raw;
+  return String(id || '');
+}
 
 // POST /api/tasks/[id]/complete - Agent marks task as done
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
     const body = await request.json();
@@ -21,8 +29,8 @@ export async function POST(
     }
 
     // Validate agent
-    const validAgents = ['shri', 'leo', 'nova', 'pixel', 'cipher', 'echo', 'forge'];
-    if (!validAgents.includes(agent)) {
+    const validAgents = AGENT_CONFIG.agents.map((a) => a.id);
+    if (!validAgents.includes(String(agent).toLowerCase() as any)) {
       return NextResponse.json(
         { success: false, error: `Invalid agent. Must be one of: ${validAgents.join(', ')}` },
         { status: 400 }

@@ -243,18 +243,47 @@ export default function TaskDetail({ task: initialTask }: TaskDetailProps) {
             </div>
             
             {/* Actions */}
-            <button
-              onClick={handleDelete}
-              disabled={loading}
-              className="group px-4 py-2.5 rounded-xl bg-danger/10 border border-danger/30 hover:bg-danger/20 transition-colors"
-            >
-              <span className="flex items-center gap-2 font-mono text-xs text-danger tracking-wider uppercase">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Delete
-              </span>
-            </button>
+            <div className="flex items-center gap-3">
+              {task.assignee === 'main' && (
+                <button
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      await fetch(`/api/tasks/${task.id}/run`, { method: 'POST' });
+                      // Refresh task
+                      const taskResponse = await fetch(`/api/tasks/${task.id}`);
+                      const taskData = await taskResponse.json();
+                      if (taskData.success) setTask(taskData.task);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  disabled={loading}
+                  className="group px-4 py-2.5 rounded-xl bg-cyan/10 border border-cyan/30 hover:bg-cyan/20 transition-colors"
+                  title="Start this mission (move subtasks to TODO)"
+                >
+                  <span className="flex items-center gap-2 font-mono text-xs text-cyan tracking-wider uppercase">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 3l14 9-14 9V3z" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Run
+                  </span>
+                </button>
+              )}
+
+              <button
+                onClick={handleDelete}
+                disabled={loading}
+                className="group px-4 py-2.5 rounded-xl bg-danger/10 border border-danger/30 hover:bg-danger/20 transition-colors"
+              >
+                <span className="flex items-center gap-2 font-mono text-xs text-danger tracking-wider uppercase">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Delete
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

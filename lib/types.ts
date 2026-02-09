@@ -56,12 +56,16 @@ export interface Task {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  order: number; // sort key within a status column (lower = higher)
   dueDate?: string;
   tags: string[];
   comments: Comment[];
   workLog: WorkLogEntry[];
   deliverable?: string; // DEPRECATED: Use deliverables instead. Kept for backward compatibility
   deliverables?: string[]; // Array of file paths to the outputs
+
+  // Orchestration
+  parentId?: string; // if set, this task is a child/subtask of parentId
 }
 
 export interface Agent {
@@ -101,12 +105,15 @@ export interface SerializedTask {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  order: number;
   dueDate?: string;
   tags: string[];
   comments: SerializedComment[];
   workLog: SerializedWorkLogEntry[];
   deliverable?: string; // DEPRECATED: Use deliverables instead. Kept for backward compatibility
   deliverables?: string[]; // Array of file paths to the outputs
+
+  parentId?: string;
 }
 
 export interface SerializedAgent {

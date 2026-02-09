@@ -13,10 +13,12 @@ export default function TaskDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const taskId = Array.isArray(params.id) ? params.id[0] : params.id;
+
   useEffect(() => {
     const fetchTask = async () => {
       try {
-        const response = await fetch(`/api/tasks/${params.id}`);
+        const response = await fetch(`/api/tasks/${taskId}`);
         const data = await response.json();
         if (data.success) {
           setTask(data.task);
@@ -31,10 +33,10 @@ export default function TaskDetailPage() {
       }
     };
 
-    if (params.id) {
+    if (taskId) {
       fetchTask();
     }
-  }, [params.id]);
+  }, [taskId]);
 
   if (loading) {
     return (

@@ -4,14 +4,23 @@ import { TaskStatus, TaskPriority, AgentId } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
+async function resolveTaskId(params: unknown): Promise<string> {
+  // Next.js versions differ: sometimes `params` is a Promise, sometimes values can be string[]
+  const p: any = typeof (params as any)?.then === 'function' ? await (params as any) : params;
+  const raw = p?.id;
+  const id = Array.isArray(raw) ? raw[0] : raw;
+  return String(id || '');
+}
+
 // GET /api/tasks/[id] - Get task details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
-    const task = await getTask(params.id);
-    
+    const taskId = await resolveTaskId(params);
+    const task = await getTask(taskId);
+
     if (!task) {
       return NextResponse.json(
         { success: false, error: 'Task not found' },
@@ -35,11 +44,11 @@ export async function GET(
 // PATCH /api/tasks/[id] - Update task
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
     const body = await request.json();
-    const { title, description, status, priority, assignee, tags, dueDate, deliverable, deliverables } = body;
+    const { title, description, status, priority, assignee, tags, dueDate, deliverable, deliverables, order } = body;
 
     // Validate status if provided
     if (status && !['backlog', 'todo', 'in_progress', 'review', 'done'].includes(status)) {
@@ -87,6 +96,7 @@ export async function PATCH(
       dueDate: Date | null;
       deliverable: string | null;
       deliverables: string[] | null;
+      order: number;
     }> = {};
 
     if (title !== undefined) updateData.title = title;
@@ -98,8 +108,10 @@ export async function PATCH(
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
     if (deliverable !== undefined) updateData.deliverable = deliverable;
     if (deliverables !== undefined) updateData.deliverables = deliverables;
+    if (order !== undefined) updateData.order = Number(order);
 
-    const task = await updateTask(params.id, updateData);
+    const taskId = await resolveTaskId(params);
+    const task = await updateTask(taskId, updateData);
 
     if (!task) {
       return NextResponse.json(
@@ -124,10 +136,11 @@ export async function PATCH(
 // DELETE /api/tasks/[id] - Delete task
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
-    const task = await getTask(params.id);
+    const taskId = await resolveTaskId(params);
+    const task = await getTask(taskId);
     
     if (!task) {
       return NextResponse.json(
@@ -136,7 +149,7 @@ export async function DELETE(
       );
     }
 
-    await deleteTask(params.id);
+    await deleteTask(taskId);
 
     return NextResponse.json({
       success: true,

@@ -3,11 +3,18 @@
 import { useEffect, useState } from "react";
 import { SerializedTask } from "@/lib/types";
 import KanbanBoard from "@/components/KanbanBoard";
+import ActivityLog from "@/components/ActivityLog";
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<SerializedTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Mobile/tablet drawer
+  const [activityOpen, setActivityOpen] = useState(false);
+
+  // Desktop sidebar toggle (so Activity doesn't block DONE column)
+  const [activitySidebarOpen, setActivitySidebarOpen] = useState(true);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -120,8 +127,42 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <KanbanBoard initialTasks={tasks} />
+    <div className="h-full flex flex-col min-h-0">
+      {/* Scroll container so you can reach the bottom on smaller screens */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex gap-6 px-6 pb-6">
+          <div className="flex-1 min-w-0">
+            <KanbanBoard initialTasks={tasks} />
+          </div>
+
+          {/* Desktop sidebar (toggleable) */}
+          {activitySidebarOpen && <ActivityLog />}
+        </div>
+      </div>
+
+      {/* Floating button to open Activity drawer (mobile/tablet) */}
+      <button
+        onClick={() => setActivityOpen(true)}
+        className="fixed right-4 top-24 z-40 xl:hidden px-3 py-2 rounded-xl bg-abyss/60 border border-elevated/40 hover:bg-abyss/80 transition-colors font-mono text-[11px] text-text-secondary uppercase tracking-wider"
+      >
+        Activity
+      </button>
+
+      {/* Desktop toggle button to show/hide Activity sidebar */}
+      <button
+        onClick={() => setActivitySidebarOpen((v) => !v)}
+        className="fixed right-4 top-24 z-40 hidden xl:block px-3 py-2 rounded-xl bg-abyss/60 border border-elevated/40 hover:bg-abyss/80 transition-colors font-mono text-[11px] text-text-secondary uppercase tracking-wider"
+        title={activitySidebarOpen ? 'Hide activity' : 'Show activity'}
+      >
+        {activitySidebarOpen ? 'Hide activity' : 'Show activity'}
+      </button>
+
+      {/* Slide-out drawer (mobile/tablet) */}
+      <ActivityLog
+        variant="drawer"
+        open={activityOpen}
+        onClose={() => setActivityOpen(false)}
+      />
     </div>
   );
 }

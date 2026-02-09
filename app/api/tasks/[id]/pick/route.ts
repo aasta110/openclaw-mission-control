@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pickTask, serializeTask } from '@/lib/local-storage';
 import { AgentId } from '@/lib/types';
+import { AGENT_CONFIG } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
+
+async function resolveTaskId(params: unknown): Promise<string> {
+  const p: any = typeof (params as any)?.then === 'function' ? await (params as any) : params;
+  const raw = p?.id;
+  const id = Array.isArray(raw) ? raw[0] : raw;
+  return String(id || '');
+}
 
 // POST /api/tasks/[id]/pick - Agent picks up a task
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
     const body = await request.json();

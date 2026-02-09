@@ -3,15 +3,23 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+async function resolvePathParam(params: unknown): Promise<string[]> {
+  const p: any = typeof (params as any)?.then === 'function' ? await (params as any) : params;
+  const raw = p?.path;
+  return Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
+}
 
 // GET /api/files/[...path] - Read file content from workspace directories
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: any }
 ) {
   try {
-    const filePath = params.path.join('/');
+    const parts = await resolvePathParam(params);
+    const filePath = parts.join('/');
     
     // Security: Only allow .md files
     if (!filePath.endsWith('.md')) {

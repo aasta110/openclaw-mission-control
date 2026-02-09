@@ -109,6 +109,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Idempotency guard (prevents duplicate missions created by cron/user double-submit)
+    // If this is an Atlas parent mission request and an equivalent mission was created very recently,
+    // return the existing one instead of creating a duplicate parent+children.
+    if ((assignee || null) === 'main') {
+      const nowMs = Date.now();
+      const windowMs = 10 * 60 * 1000; // 10 minutes
+      const requestedTags = Array.isArray(tags) ? tags : [];
+
+      const all = await getTasks();
+      const candidates = all
+        .filter((t) => !t.parentId)
+        .filter((t) => (t.assignee || null) === 'main')
+        .filter((t) => (t.createdBy || '') === String(createdBy))
+        .filter((t) => (t.title || '') === String(title))
+        .filter((t) => {
+          const tTags = Array.isArray(t.tags) ? t.tags : [];
+          // require requested tags to be subset of existing tags
+          return requestedTags.every((rt) => tTags.includes(rt));
+        })
+        .filter((t) => {
+          const ts = new Date(t.createdAt).getTime();
+          return Number.isFinite(ts) && nowMs - ts >= 0 && nowMs - ts <= windowMs;
+        })
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      if (candidates.length > 0) {
+        const existing = candidates[0];
+        const hasChildren = all.some((t) => t.parentId === existing.id);
+
+        return NextResponse.json(
+          {
+            success: true,
+            task: serializeTask(existing),
+            autoSplit: hasChildren,
+            idempotent: true,
+          },
+          { status: 200 },
+        );
+      }
+    }
+
     const task = await createTask({
       title,
       description,

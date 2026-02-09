@@ -1,25 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAgent, updateAgent, serializeAgent } from '@/lib/local-storage';
-import { AgentId, AgentStatus } from '@/lib/types';
+import { AgentId, AgentStatus, AGENTS } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
+async function resolveAgentId(params: unknown): Promise<string> {
+  const p: any = typeof (params as any)?.then === 'function' ? await (params as any) : params;
+  const raw = p?.id;
+  const id = Array.isArray(raw) ? raw[0] : raw;
+  return String(id || '');
+}
+
+function isValidAgentId(id: string): id is AgentId {
+  return AGENTS.some((a) => a.id === id);
+}
 
 // GET /api/agents/[id] - Get agent details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
-    // Validate agent ID
-    const validAgents = ['shri', 'leo', 'nova', 'pixel', 'cipher', 'echo', 'forge'];
-    if (!validAgents.includes(params.id)) {
+    const agentId = await resolveAgentId(params);
+    if (!isValidAgentId(agentId)) {
       return NextResponse.json(
-        { success: false, error: `Invalid agent ID. Must be one of: ${validAgents.join(', ')}` },
+        { success: false, error: `Invalid agent ID: ${agentId}` },
         { status: 400 }
       );
     }
 
-    const agent = await getAgent(params.id as AgentId);
+    const agent = await getAgent(agentId);
 
     if (!agent) {
       return NextResponse.json(
@@ -44,14 +54,13 @@ export async function GET(
 // PATCH /api/agents/[id] - Update agent status/lastSeen
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: any }
 ) {
   try {
-    // Validate agent ID
-    const validAgents = ['shri', 'leo', 'nova', 'pixel', 'cipher', 'echo', 'forge'];
-    if (!validAgents.includes(params.id)) {
+    const agentId = await resolveAgentId(params);
+    if (!isValidAgentId(agentId)) {
       return NextResponse.json(
-        { success: false, error: `Invalid agent ID. Must be one of: ${validAgents.join(', ')}` },
+        { success: false, error: `Invalid agent ID: ${agentId}` },
         { status: 400 }
       );
     }
@@ -78,7 +87,7 @@ export async function PATCH(
     if (status !== undefined) updateData.status = status;
     if (currentTask !== undefined) updateData.currentTask = currentTask;
 
-    const agent = await updateAgent(params.id as AgentId, updateData);
+    const agent = await updateAgent(agentId, updateData);
 
     if (!agent) {
       return NextResponse.json(
