@@ -41,6 +41,11 @@ export default function TaskDetail({ task: initialTask }: TaskDetailProps) {
   
   // Comment form state
   const [commentAuthor, setCommentAuthor] = useState<AgentId>(AGENT_CONFIG.agents[0].id);
+
+  // Review form state
+  const [reviewer, setReviewer] = useState<AgentId>('main');
+  const [reviewNotes, setReviewNotes] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [commentContent, setCommentContent] = useState('');
   const [commentSubmitting, setCommentSubmitting] = useState(false);
 
@@ -291,6 +296,118 @@ export default function TaskDetail({ task: initialTask }: TaskDetailProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Review Gate */}
+          {task.status === 'review' && (
+            <div className="relative rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-surface/80 to-deep/80 backdrop-blur-xl" />
+              <div className="absolute inset-0 rounded-2xl border border-elevated/50" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet/50 via-cyan/50 to-success/50" />
+
+              <div className="relative p-6">
+                <h2 className="font-display text-lg font-semibold text-text-primary mb-4 flex items-center gap-3">
+                  <svg className="w-5 h-5 text-violet-bright" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Review
+                  <span className={`font-mono text-[10px] tracking-wider px-2 py-1 rounded-md border uppercase ${
+                    task.reviewStatus === 'approved'
+                      ? 'bg-success/10 text-success border-success/30'
+                      : task.reviewStatus === 'changes_requested'
+                      ? 'bg-danger/10 text-danger border-danger/30'
+                      : 'bg-warning/10 text-warning border-warning/30'
+                  }`}>
+                    {task.reviewStatus || 'pending'}
+                  </span>
+                </h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-mono text-[10px] text-text-muted tracking-wider uppercase mb-2">Reviewer</label>
+                    <select
+                      value={reviewer}
+                      onChange={(e) => setReviewer(e.target.value as AgentId)}
+                      disabled={reviewSubmitting}
+                      className="w-full px-4 py-3 rounded-xl cyber-select text-text-primary font-body"
+                    >
+                      {AGENTS.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.emoji} {a.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-mono text-[10px] text-text-muted tracking-wider uppercase mb-2">Notes (optional)</label>
+                    <input
+                      value={reviewNotes}
+                      onChange={(e) => setReviewNotes(e.target.value)}
+                      disabled={reviewSubmitting}
+                      className="w-full px-4 py-3 rounded-xl bg-abyss/50 border border-elevated/30 text-text-primary font-body text-sm placeholder-text-muted/50 focus:outline-none focus:border-cyan/50 transition-colors"
+                      placeholder="What looks good / what needs changes"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3 mt-4">
+                  <button
+                    disabled={reviewSubmitting}
+                    onClick={async () => {
+                      setReviewSubmitting(true);
+                      try {
+                        const resp = await fetch(`/api/tasks/${task.id}/review`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ reviewer, decision: 'approved', notes: reviewNotes }),
+                        });
+                        const data = await resp.json();
+                        if (data.success) setTask(data.task);
+                      } finally {
+                        setReviewSubmitting(false);
+                      }
+                    }}
+                    className="group px-4 py-2.5 rounded-xl bg-success/10 border border-success/30 hover:bg-success/20 transition-colors"
+                  >
+                    <span className="flex items-center gap-2 font-mono text-xs text-success tracking-wider uppercase">
+                      Approve
+                    </span>
+                  </button>
+
+                  <button
+                    disabled={reviewSubmitting}
+                    onClick={async () => {
+                      setReviewSubmitting(true);
+                      try {
+                        const resp = await fetch(`/api/tasks/${task.id}/review`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ reviewer, decision: 'changes_requested', notes: reviewNotes }),
+                        });
+                        const data = await resp.json();
+                        if (data.success) setTask(data.task);
+                      } finally {
+                        setReviewSubmitting(false);
+                      }
+                    }}
+                    className="group px-4 py-2.5 rounded-xl bg-danger/10 border border-danger/30 hover:bg-danger/20 transition-colors"
+                  >
+                    <span className="flex items-center gap-2 font-mono text-xs text-danger tracking-wider uppercase">
+                      Request changes
+                    </span>
+                  </button>
+
+                  {task.reviewedBy && (
+                    <div className="ml-auto flex items-center gap-2 font-mono text-[10px] text-text-muted">
+                      <span>Reviewed by</span>
+                      <span className="text-text-primary">{task.reviewedBy}</span>
+                      {task.reviewedAt && <span>{new Date(task.reviewedAt).toLocaleString()}</span>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           {/* Description */}
           <div className="relative rounded-2xl overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-surface/80 to-deep/80 backdrop-blur-xl" />

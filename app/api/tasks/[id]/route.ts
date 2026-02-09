@@ -48,7 +48,7 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json();
-    const { title, description, status, priority, assignee, tags, dueDate, deliverable, deliverables, order } = body;
+    const { title, description, status, priority, assignee, tags, dueDate, deliverable, deliverables, order, reviewStatus, reviewedBy, reviewedAt, reviewNotes } = body;
 
     // Validate status if provided
     if (status && !['backlog', 'todo', 'in_progress', 'review', 'done'].includes(status)) {
@@ -97,6 +97,10 @@ export async function PATCH(
       deliverable: string | null;
       deliverables: string[] | null;
       order: number;
+      reviewStatus: any;
+      reviewedBy: any;
+      reviewedAt: any;
+      reviewNotes: any;
     }> = {};
 
     if (title !== undefined) updateData.title = title;
@@ -109,6 +113,10 @@ export async function PATCH(
     if (deliverable !== undefined) updateData.deliverable = deliverable;
     if (deliverables !== undefined) updateData.deliverables = deliverables;
     if (order !== undefined) updateData.order = Number(order);
+    if (reviewStatus !== undefined) (updateData as any).reviewStatus = reviewStatus;
+    if (reviewedBy !== undefined) (updateData as any).reviewedBy = reviewedBy;
+    if (reviewedAt !== undefined) (updateData as any).reviewedAt = reviewedAt ? new Date(reviewedAt) : null;
+    if (reviewNotes !== undefined) (updateData as any).reviewNotes = reviewNotes;
 
     const taskId = await resolveTaskId(params);
     const task = await updateTask(taskId, updateData);
@@ -124,10 +132,20 @@ export async function PATCH(
       success: true,
       task: serializeTask(task),
     });
-  } catch (error) {
+  } catch (error: any) {
+    const msg = String(error?.message || error);
     console.error('Error updating task:', error);
+
+    // Review gate violations should be a client-visible conflict, not a generic 500.
+    if (msg.includes('Cannot mark parent DONE')) {
+      return NextResponse.json(
+        { success: false, error: msg },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
-      { success: false, error: 'Failed to update task' },
+      { success: false, error: 'Failed to update task', detail: msg },
       { status: 500 }
     );
   }

@@ -155,6 +155,10 @@ export function serializeTask(task: Task): SerializedTask {
     ...task,
     createdAt: task.createdAt,
     updatedAt: task.updatedAt,
+    reviewStatus: (task as any).reviewStatus,
+    reviewedBy: (task as any).reviewedBy,
+    reviewedAt: (task as any).reviewedAt,
+    reviewNotes: (task as any).reviewNotes,
     dueDate: task.dueDate || undefined,
     deliverable: task.deliverable,
     deliverables: deliverables.length > 0 ? deliverables : undefined,
@@ -268,11 +272,35 @@ export async function updateTask(
     deliverable: string | null;
     deliverables: string[] | null;
     order: number | null;
+    // review gate
+    reviewStatus: 'pending' | 'approved' | 'changes_requested';
+    reviewedBy: AgentId;
+    reviewedAt: Date;
+    reviewNotes: string | null;
   }>,
 ): Promise<Task | null> {
   const tasks = await readTasks();
   const index = tasks.findIndex((t) => t.id === id);
   if (index === -1) return null;
+
+  // Parent gating: a parent mission cannot be marked DONE until all child tasks are approved.
+  if (data.status === 'done') {
+    const children = tasks.filter((t) => (t as any).parentId === id);
+    if (children.length > 0) {
+      const notApproved = children.filter((c: any) => c.reviewStatus !== 'approved');
+      if (notApproved.length > 0) {
+        throw new Error(
+          `Cannot mark parent DONE: ${notApproved.length}/${children.length} subtasks are not approved`,
+        );
+      }
+    }
+  }
+
+  // If a task is entering review and doesn't have a reviewStatus yet, default to pending.
+  const enteringReview = data.status === 'review';
+  if (enteringReview && !(tasks[index] as any).reviewStatus && !('reviewStatus' in data)) {
+    (tasks[index] as any).reviewStatus = 'pending';
+  }
 
   const updateFields: Record<string, unknown> = {
     ...data,
@@ -291,6 +319,14 @@ export async function updateTask(
     tasks[index].dueDate = data.dueDate
       ? data.dueDate.toISOString()
       : undefined;
+  }
+
+  // Convert review timestamp
+  if ((data as any).reviewedAt !== undefined) {
+    (tasks[index] as any).reviewedAt = (data as any).reviewedAt
+      ? (data as any).reviewedAt.toISOString()
+      : undefined;
+    delete (updateFields as any).reviewedAt;
   }
 
   // Apply updates
@@ -408,6 +444,7 @@ export async function completeTask(
   };
 
   tasks[index].status = "review";
+  (tasks[index] as any).reviewStatus = (tasks[index] as any).reviewStatus || 'pending';
   tasks[index].updatedAt = now;
   tasks[index].workLog.push(workLogEntry);
 
