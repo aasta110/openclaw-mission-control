@@ -19,7 +19,49 @@ export async function GET(request: NextRequest) {
     if (assignee) filters.assignee = assignee;
     if (priority) filters.priority = priority;
 
+    // One-time migration behavior (idempotent):
+    // If an Atlas mission (assignee=main) exists in BACKLOG and already has children,
+    // auto-start it by moving parent + children to TODO.
+    // This makes old missions behave like the new auto-start flow.
+    const allTasks = await getTasks();
+    const childrenByParent = new Map<string, number>();
+    for (const t of allTasks) {
+      if (t.parentId) {
+        childrenByParent.set(t.parentId, (childrenByParent.get(t.parentId) || 0) + 1);
+      }
+    }
+
+    let migrated = false;
+    for (const t of allTasks) {
+      const hasChildren = (childrenByParent.get(t.id) || 0) > 0;
+      const isAtlasParent = (t.assignee || null) === 'main' && !t.parentId;
+      const isBacklog = t.status === 'backlog';
+
+      if (isAtlasParent && isBacklog && hasChildren) {
+        await updateTask(t.id, { status: 'todo' });
+        await addComment(
+          t.id,
+          'main',
+          'Auto-start migration: this mission had existing subtasks; moved parent + children to TODO automatically.'
+        );
+
+        // Move only backlog children → todo (don’t override in_progress/review/done)
+        for (const c of allTasks) {
+          if (c.parentId === t.id && c.status === 'backlog') {
+            await updateTask(c.id, { status: 'todo' });
+          }
+        }
+
+        migrated = true;
+      }
+    }
+
     let tasks = await getTasks(Object.keys(filters).length > 0 ? filters : undefined);
+
+    // If we migrated, reload the list to reflect updated statuses.
+    if (migrated) {
+      tasks = await getTasks(Object.keys(filters).length > 0 ? filters : undefined);
+    }
 
     if (parentId !== null) {
       // parentId query supports:
