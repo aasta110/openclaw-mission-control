@@ -15,25 +15,23 @@ export default function Navbar() {
 
   return (
     <nav className="relative z-50">
-      {/* Glass backdrop */}
-      <div className="absolute inset-0 bg-abyss/80 backdrop-blur-xl border-b border-cyan-dim/20" />
-
-      {/* Glow line */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan/50 to-transparent" />
+      {/* macOS-like toolbar */}
+      <div className="absolute inset-0 bg-white/6 backdrop-blur-xl border-b border-white/10" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-white/10" />
 
       <div className="relative px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-4 group">
-            {/* Animated logo mark */}
+          <Link href="/" className="flex items-center gap-3 group">
+            {/* Logo mark (subtle) */}
             <div className="relative">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan to-violet flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+              <div className="w-9 h-9 rounded-xl bg-white/8 border border-white/12 flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.03]">
                 <svg
-                  className="w-6 h-6 text-void"
+                  className="w-5 h-5 text-text-primary"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2.5">
+                  strokeWidth="2.2">
                   <path
                     d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
                     strokeLinecap="round"
@@ -41,22 +39,20 @@ export default function Navbar() {
                   />
                 </svg>
               </div>
-              {/* Pulse ring */}
-              <div className="absolute inset-0 rounded-lg bg-cyan-glow/30 animate-ping opacity-0 group-hover:opacity-100" />
             </div>
 
             <div className="flex flex-col">
-              <span className="font-display font-bold text-lg tracking-wider text-text-primary">
+              <span className="font-display font-semibold text-[15px] tracking-wide text-text-primary">
                 {AGENT_CONFIG.brand.name}
               </span>
-              <span className="font-mono text-[10px] text-cyan tracking-[0.3em] uppercase">
+              <span className="font-body text-[12px] text-text-muted">
                 {AGENT_CONFIG.brand.subtitle}
               </span>
             </div>
           </Link>
 
           {/* Navigation */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-deep/50 border border-elevated/50">
+          <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/6 border border-white/10">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
@@ -65,12 +61,12 @@ export default function Navbar() {
                   key={item.href}
                   href={item.href}
                   className={`
-                    relative flex items-center gap-2.5 px-5 py-2.5 rounded-lg font-mono text-xs tracking-wider
-                    transition-all duration-300 overflow-hidden
+                    relative flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[12px]
+                    transition-colors duration-150
                     ${
                       isActive
-                        ? "text-void bg-gradient-to-r from-cyan to-cyan-bright shadow-glow-cyan"
-                        : "text-text-secondary hover:text-cyan-bright hover:bg-elevated/50"
+                        ? "bg-[rgba(10,132,255,0.18)] text-text-primary border border-[rgba(10,132,255,0.25)]"
+                        : "text-text-secondary hover:text-text-primary hover:bg-white/8"
                     }
                   `}>
                   {/* Active indicator line */}
@@ -78,8 +74,8 @@ export default function Navbar() {
                     <span className="absolute inset-x-0 bottom-0 h-0.5 bg-white/50" />
                   )}
 
-                  <Icon className={`w-4 h-4 ${isActive ? "text-void" : ""}`} />
-                  <span className="font-semibold">{item.label}</span>
+                  <Icon className={`w-4 h-4 ${isActive ? "text-text-primary" : ""}`} />
+                  <span className="font-body font-medium tracking-wide">{item.label}</span>
                 </Link>
               );
             })}
