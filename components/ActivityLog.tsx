@@ -17,10 +17,16 @@ type MissionEvent = {
 function fmtTime(ts: string) {
   try {
     const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   } catch {
     return ts;
   }
+}
+
+function sourcePill(source: MissionEvent['source']) {
+  if (source === 'openclaw') return 'bg-[rgba(10,132,255,0.15)] border-[rgba(10,132,255,0.25)] text-[rgba(245,245,247,0.9)]';
+  if (source === 'ui') return 'bg-white/8 border-white/12 text-text-secondary';
+  return 'bg-white/6 border-white/10 text-text-muted';
 }
 
 export default function ActivityLog({
@@ -56,24 +62,21 @@ export default function ActivityLog({
   }, [events]);
 
   const content = (
-    <div className="relative rounded-2xl overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-surface/80 to-deep/80 backdrop-blur-xl" />
-      <div className="absolute inset-0 rounded-2xl border border-elevated/50" />
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan/50 via-violet/50 to-magenta/50" />
+    <div className="relative rounded-3xl overflow-hidden">
+      <div className="absolute inset-0 glass-card" />
+      <div className="absolute inset-0 rounded-3xl border border-white/10" />
 
       <div className="relative p-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-sm font-semibold tracking-wider text-text-primary uppercase">
-            Activity
-          </h2>
+          <h2 className="font-body text-sm font-semibold text-text-primary tracking-wide">Activity</h2>
           <div className="flex items-center gap-3">
-            <span className="font-mono text-[10px] text-text-muted tracking-wider uppercase">
+            <span className="font-body text-xs text-text-muted">
               {loading ? 'Loading…' : `${sorted.length} events`}
             </span>
             {variant === 'drawer' && onClose && (
               <button
                 onClick={onClose}
-                className="px-2 py-1 rounded-lg bg-elevated/30 border border-elevated/50 hover:bg-elevated/50 transition-colors font-mono text-[10px] text-text-secondary uppercase"
+                className="px-3 py-1.5 rounded-full bg-white/6 border border-white/10 hover:bg-white/10 transition-colors text-xs text-text-secondary"
               >
                 Close
               </button>
@@ -84,28 +87,15 @@ export default function ActivityLog({
         <div className="space-y-2 max-h-[70vh] overflow-auto pr-1">
           {sorted.length === 0 && !loading && (
             <div className="text-center py-10">
-              <p className="font-mono text-xs text-text-muted">No activity yet</p>
+              <p className="font-body text-xs text-text-muted">No activity yet</p>
             </div>
           )}
 
           {sorted.map((e) => (
-            <div
-              key={e.id}
-              className="rounded-xl bg-abyss/40 border border-elevated/30 px-3 py-2"
-            >
+            <div key={e.id} className="rounded-2xl bg-white/4 border border-white/10 px-3 py-2">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-[10px] text-text-muted">
-                  {fmtTime(e.ts)}
-                </span>
-                <span
-                  className={`font-mono text-[10px] px-1.5 py-0.5 rounded border tracking-wider uppercase ${
-                    e.source === 'openclaw'
-                      ? 'bg-cyan/10 text-cyan border-cyan/30'
-                      : e.source === 'ui'
-                      ? 'bg-violet/10 text-violet-300 border-violet-400/30'
-                      : 'bg-elevated/30 text-text-muted border-elevated/50'
-                  }`}
-                >
+                <span className="font-mono text-[10px] text-text-muted">{fmtTime(e.ts)}</span>
+                <span className={`font-mono text-[10px] px-2 py-0.5 rounded-full border ${sourcePill(e.source)}`}>
                   {e.source}
                 </span>
               </div>
@@ -136,11 +126,7 @@ export default function ActivityLog({
     if (!open) return null;
     return (
       <div className="fixed inset-0 z-50">
-        <button
-          className="absolute inset-0 bg-black/40"
-          aria-label="Close activity"
-          onClick={onClose}
-        />
+        <button className="absolute inset-0 bg-black/45" aria-label="Close activity" onClick={onClose} />
         <div className="absolute top-0 right-0 h-full w-[420px] max-w-[92vw] p-4">
           {content}
         </div>
@@ -154,4 +140,3 @@ export default function ActivityLog({
     </aside>
   );
 }
-
