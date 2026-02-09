@@ -46,13 +46,32 @@ async function ensureFile(
   }
 }
 
-// Atomic write: write to temp file then rename
+// Atomic-ish write on Windows: write to temp file then move into place.
+// Note: On Windows, fs.rename(tmp, existingPath) can fail if the destination exists.
+// We fall back to copy+replace to keep the system functioning.
 async function atomicWrite(filePath: string, data: unknown): Promise<void> {
   await ensureDataDir();
   const tmpFile = filePath + ".tmp." + Date.now();
+
   try {
     await fs.writeFile(tmpFile, JSON.stringify(data, null, 2), "utf-8");
-    await fs.rename(tmpFile, filePath);
+
+    try {
+      // Fast path (works on many platforms when destination doesn't exist)
+      await fs.rename(tmpFile, filePath);
+      return;
+    } catch (err: any) {
+      // Windows-safe fallback: copy over the destination, then delete temp.
+      // This is not perfectly atomic, but avoids hard failures that break PATCH.
+      const code = err?.code;
+      if (code !== 'EEXIST' && code !== 'EPERM' && code !== 'EACCES') {
+        throw err;
+      }
+
+      await fs.copyFile(tmpFile, filePath);
+      await fs.unlink(tmpFile);
+      return;
+    }
   } catch (err) {
     // Clean up temp file on error
     try {
