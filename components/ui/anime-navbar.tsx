@@ -166,71 +166,79 @@ export function AnimeNavBar({ items, className, defaultActive = "Home" }: NavBar
                           }
                         }
                       >
-                        {/* Star body */}
+                        {/* Star body + face (single SVG so the face is always on the star) */}
                         <svg
                           viewBox="0 0 24 24"
                           className="absolute inset-0 w-full h-full drop-shadow-[0_0_12px_rgba(255,255,255,0.35)]"
                           aria-hidden="true">
+                          {/* star */}
                           <path
                             d="M12 2l2.95 6.22 6.85.6-5.18 4.48 1.56 6.7L12 16.9 5.82 20l1.56-6.7L2.2 8.82l6.85-.6L12 2z"
                             fill="white"
                             opacity="0.98"
                           />
+
+                          {/* face */}
+                          <g>
+                            {/* eyes */}
+                            <motion.circle
+                              cx="9.2"
+                              cy="10.2"
+                              r="1.05"
+                              fill="#111"
+                              animate={
+                                hoveredTab
+                                  ? { scaleY: [1, 0.25, 1] }
+                                  : { scaleY: 1 }
+                              }
+                              transition={hoveredTab ? { duration: 0.2, times: [0, 0.5, 1] } : undefined}
+                              style={{ transformOrigin: "9.2px 10.2px" }}
+                            />
+                            <motion.circle
+                              cx="14.8"
+                              cy="10.2"
+                              r="1.05"
+                              fill="#111"
+                              animate={
+                                hoveredTab
+                                  ? { scaleY: [1, 0.25, 1] }
+                                  : { scaleY: 1 }
+                              }
+                              transition={hoveredTab ? { duration: 0.2, times: [0, 0.5, 1] } : undefined}
+                              style={{ transformOrigin: "14.8px 10.2px" }}
+                            />
+
+                            {/* blush */}
+                            <motion.ellipse
+                              cx="7.6"
+                              cy="13.2"
+                              rx="1.25"
+                              ry="0.85"
+                              fill="#f9a8d4"
+                              opacity={hoveredTab ? 0.8 : 0.6}
+                            />
+                            <motion.ellipse
+                              cx="16.4"
+                              cy="13.2"
+                              rx="1.25"
+                              ry="0.85"
+                              fill="#f9a8d4"
+                              opacity={hoveredTab ? 0.8 : 0.6}
+                            />
+
+                            {/* mouth */}
+                            <motion.path
+                              d="M10 14.3c1 .9 3 .9 4 0"
+                              fill="none"
+                              stroke="#111"
+                              strokeWidth="1.6"
+                              strokeLinecap="round"
+                              animate={hoveredTab ? { translateY: -0.4 } : { translateY: 0 }}
+                              transition={{ type: "spring", stiffness: 240, damping: 18 }}
+                            />
+                          </g>
                         </svg>
-                        <motion.div 
-                          className="absolute w-2 h-2 bg-black rounded-full"
-                          animate={
-                            hoveredTab ? {
-                              scaleY: [1, 0.2, 1],
-                              transition: {
-                                duration: 0.2,
-                                times: [0, 0.5, 1]
-                              }
-                            } : {}
-                          }
-                          style={{ left: '25%', top: '40%' }}
-                        />
-                        <motion.div 
-                          className="absolute w-2 h-2 bg-black rounded-full"
-                          animate={
-                            hoveredTab ? {
-                              scaleY: [1, 0.2, 1],
-                              transition: {
-                                duration: 0.2,
-                                times: [0, 0.5, 1]
-                              }
-                            } : {}
-                          }
-                          style={{ right: '25%', top: '40%' }}
-                        />
-                        <motion.div 
-                          className="absolute w-2 h-1.5 bg-pink-300 rounded-full"
-                          animate={{
-                            opacity: hoveredTab ? 0.8 : 0.6
-                          }}
-                          style={{ left: '15%', top: '55%' }}
-                        />
-                        <motion.div 
-                          className="absolute w-2 h-1.5 bg-pink-300 rounded-full"
-                          animate={{
-                            opacity: hoveredTab ? 0.8 : 0.6
-                          }}
-                          style={{ right: '15%', top: '55%' }}
-                        />
-                        
-                        <motion.div 
-                          className="absolute w-4 h-2 border-b-2 border-black rounded-full"
-                          animate={
-                            hoveredTab ? {
-                              scaleY: 1.5,
-                              y: -1
-                            } : {
-                              scaleY: 1,
-                              y: 0
-                            }
-                          }
-                          style={{ left: '30%', top: '60%' }}
-                        />
+
                         <AnimatePresence>
                           {hoveredTab && (
                             <>
