@@ -63,7 +63,7 @@ export default function DashboardPage() {
       // Do it now…
       scrollToRightEdge();
       // …and again after the sidebar width animation completes (clientWidth changes during the transition).
-      const t = window.setTimeout(scrollToRightEdge, 420);
+      const t = window.setTimeout(scrollToRightEdge, 520);
       return () => window.clearTimeout(t);
     }
 
@@ -200,7 +200,7 @@ export default function DashboardPage() {
         </div>
 
         <div
-          className="grid gap-6 px-6 pb-6 pt-4 transition-[grid-template-columns] duration-400 ease-out"
+          className="grid gap-6 px-6 pb-6 pt-4 transition-[grid-template-columns] duration-500 ease-in-out"
           style={{
             gridTemplateColumns: activitySidebarOpen
               ? "minmax(0,1fr) min(360px,92vw)"
@@ -213,10 +213,10 @@ export default function DashboardPage() {
           {/* Activity sidebar: always takes layout space (so it never overlays/blocks columns) */}
           <div
             className={
-              "overflow-hidden transition-[opacity,transform] duration-400 ease-out " +
+              "overflow-hidden transition-[opacity,transform] duration-500 ease-in-out " +
               (activitySidebarOpen
                 ? "opacity-100 translate-x-0"
-                : "opacity-0 translate-x-4 pointer-events-none")
+                : "opacity-0 translate-x-3 pointer-events-none")
             }>
             <ActivityLog variant="sidebar" className="w-[min(360px,92vw)]" />
           </div>
