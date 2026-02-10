@@ -147,7 +147,7 @@ export function AnimeNavBar({ items, className, defaultActive = "Home" }: NavBar
                   >
                     <div className="relative w-12 h-12">
                       <motion.div 
-                        className="absolute w-10 h-10 bg-white rounded-full left-1/2 -translate-x-1/2"
+                        className="absolute w-10 h-10 left-1/2 -translate-x-1/2 relative"
                         animate={
                           hoveredTab ? {
                             scale: [1, 1.1, 1],
@@ -166,6 +166,17 @@ export function AnimeNavBar({ items, className, defaultActive = "Home" }: NavBar
                           }
                         }
                       >
+                        {/* Star body */}
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="absolute inset-0 w-full h-full drop-shadow-[0_0_12px_rgba(255,255,255,0.35)]"
+                          aria-hidden="true">
+                          <path
+                            d="M12 2l2.95 6.22 6.85.6-5.18 4.48 1.56 6.7L12 16.9 5.82 20l1.56-6.7L2.2 8.82l6.85-.6L12 2z"
+                            fill="white"
+                            opacity="0.98"
+                          />
+                        </svg>
                         <motion.div 
                           className="absolute w-2 h-2 bg-black rounded-full"
                           animate={
