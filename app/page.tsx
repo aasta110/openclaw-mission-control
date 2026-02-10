@@ -63,7 +63,7 @@ export default function DashboardPage() {
       // Do it now…
       scrollToRightEdge();
       // …and again after the sidebar width animation completes (clientWidth changes during the transition).
-      const t = window.setTimeout(scrollToRightEdge, 320);
+      const t = window.setTimeout(scrollToRightEdge, 420);
       return () => window.clearTimeout(t);
     }
 
@@ -199,18 +199,24 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="flex gap-6 px-6 pb-6 pt-4">
-          <div className="flex-1 min-w-0 transition-[width] duration-300">
+        <div
+          className="grid gap-6 px-6 pb-6 pt-4 transition-[grid-template-columns] duration-400 ease-out"
+          style={{
+            gridTemplateColumns: activitySidebarOpen
+              ? "minmax(0,1fr) min(360px,92vw)"
+              : "minmax(0,1fr) 0px",
+          }}>
+          <div className="min-w-0">
             <KanbanBoard initialTasks={tasks} />
           </div>
 
           {/* Activity sidebar: always takes layout space (so it never overlays/blocks columns) */}
           <div
             className={
-              "overflow-hidden transition-[width,opacity,transform] duration-300 ease-out " +
+              "overflow-hidden transition-[opacity,transform] duration-400 ease-out " +
               (activitySidebarOpen
-                ? "w-[min(360px,92vw)] opacity-100 translate-x-0"
-                : "w-0 opacity-0 translate-x-4 pointer-events-none")
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 translate-x-4 pointer-events-none")
             }>
             <ActivityLog variant="sidebar" className="w-[min(360px,92vw)]" />
           </div>
