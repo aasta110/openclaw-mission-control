@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SerializedTask } from "@/lib/types";
 import KanbanBoard from "@/components/KanbanBoard";
 import ActivityLog from "@/components/ActivityLog";
@@ -12,6 +12,7 @@ export default function DashboardPage() {
 
   // Activity panel toggle (desktop: sidebar, mobile: drawer)
   const [activitySidebarOpen, setActivitySidebarOpen] = useState(false);
+  const kanbanScrollBeforeActivityRef = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -38,24 +39,39 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // When the Activity sidebar opens/closes, nudge the kanban scroll so the right-most column
-  // (e.g. DONE) doesn't get hidden behind the sidebar on narrower desktops.
+  // When the Activity sidebar opens/closes, make sure the right-most column (DONE)
+  // doesn't end up off-screen on narrower desktops.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mq = window.matchMedia("(min-width: 1024px)"); // lg
     if (!mq.matches) return;
 
-    const el = document.getElementById("kanban-scroll");
+    const el = document.getElementById("kanban-scroll") as HTMLDivElement | null;
     if (!el) return;
 
-    const delta = 360 + 24; // sidebar width + gap
-    const dir = activitySidebarOpen ? 1 : -1;
+    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
 
-    try {
-      // scrollBy keeps current position; moving content left = scroll right
-      (el as any).scrollBy?.({ left: dir * delta, behavior: "smooth" });
-    } catch {
-      el.scrollLeft = Math.max(0, el.scrollLeft + dir * delta);
+    if (activitySidebarOpen) {
+      // Save where the user was, then bias toward the far right so DONE stays visible.
+      kanbanScrollBeforeActivityRef.current = el.scrollLeft;
+      const target = maxScrollLeft;
+      try {
+        el.scrollTo({ left: target, behavior: "smooth" });
+      } catch {
+        el.scrollLeft = target;
+      }
+    } else {
+      // Restore previous scroll position (clamped).
+      const prev = kanbanScrollBeforeActivityRef.current;
+      if (typeof prev === "number") {
+        const target = Math.min(Math.max(0, prev), maxScrollLeft);
+        try {
+          el.scrollTo({ left: target, behavior: "smooth" });
+        } catch {
+          el.scrollLeft = target;
+        }
+      }
+      kanbanScrollBeforeActivityRef.current = null;
     }
   }, [activitySidebarOpen]);
 
