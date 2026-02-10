@@ -11,7 +11,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Activity panel toggle (desktop: sidebar, mobile: drawer)
-  const [activitySidebarOpen, setActivitySidebarOpen] = useState(true);
+  const [activitySidebarOpen, setActivitySidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchTasks = async () => {
