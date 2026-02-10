@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 type MissionEvent = {
@@ -43,6 +43,25 @@ export default function ActivityLog({
 }) {
   const [events, setEvents] = useState<MissionEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [skipKeys, setSkipKeys] = useState<Set<string>>(new Set());
+
+  const getSkipKey = useCallback((e: MissionEvent): string => {
+    const msgId = (e as any)?.data?.message_id || (e as any)?.data?.messageId;
+    if (msgId) return `msg:${String(msgId)}`;
+    return `evt:${e.id}`;
+  }, []);
+
+  const loadSkips = async () => {
+    try {
+      const res = await fetch('/api/skips', { cache: 'no-store' });
+      const data = await res.json();
+      if (data?.success && Array.isArray(data.keys)) {
+        setSkipKeys(new Set(data.keys as string[]));
+      }
+    } catch {
+      // ignore
+    }
+  };
 
   const load = async () => {
     try {
@@ -55,14 +74,21 @@ export default function ActivityLog({
   };
 
   useEffect(() => {
+    loadSkips();
     load();
     const t = setInterval(load, 5000);
-    return () => clearInterval(t);
+    // Skips change rarely; refresh occasionally in case multiple tabs.
+    const s = setInterval(loadSkips, 30_000);
+    return () => {
+      clearInterval(t);
+      clearInterval(s);
+    };
   }, []);
 
   const sorted = useMemo(() => {
-    return [...events].sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
-  }, [events]);
+    const filtered = events.filter((e) => !skipKeys.has(getSkipKey(e)));
+    return [...filtered].sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+  }, [events, skipKeys, getSkipKey]);
 
   const content = (
     <div className="relative rounded-3xl overflow-hidden">
@@ -98,9 +124,38 @@ export default function ActivityLog({
             <div key={e.id} className="rounded-2xl bg-white/4 border border-white/10 px-3 py-2">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-mono text-[10px] text-text-muted">{fmtTime(e.ts)}</span>
-                <span className={`font-mono text-[10px] px-2 py-0.5 rounded-full border ${sourcePill(e.source)}`}>
-                  {e.source}
-                </span>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={async () => {
+                      const key = getSkipKey(e);
+                      // optimistic UI
+                      setSkipKeys((prev) => new Set([...prev, key]));
+                      try {
+                        await fetch('/api/skips', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ key, message: e.message }),
+                        });
+                      } catch {
+                        // rollback
+                        setSkipKeys((prev) => {
+                          const next = new Set(prev);
+                          next.delete(key);
+                          return next;
+                        });
+                      }
+                    }}
+                    className="px-2 py-0.5 rounded-full bg-white/6 border border-white/10 hover:bg-white/10 transition-colors font-mono text-[10px] text-text-secondary"
+                    title="Hide this item and remember it was skipped"
+                  >
+                    skip
+                  </button>
+
+                  <span className={`font-mono text-[10px] px-2 py-0.5 rounded-full border ${sourcePill(e.source)}`}>
+                    {e.source}
+                  </span>
+                </div>
               </div>
 
               <div className="mt-1">
