@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, Users, Rocket, CheckCircle2 } from "lucide-react";
+import { LayoutGrid, Users, Rocket, CheckCircle2, Settings } from "lucide-react";
 import { AnimeNavBar } from "@/components/ui/anime-navbar";
 
 export default function Navbar() {
@@ -8,6 +8,7 @@ export default function Navbar() {
     { name: "Command", url: "/", icon: LayoutGrid },
     { name: "Completed", url: "/completed", icon: CheckCircle2 },
     { name: "Agents", url: "/team", icon: Users },
+    { name: "Settings", url: "/settings", icon: Settings },
     { name: "Deploy", url: "/tasks/new", icon: Rocket },
   ];
 
