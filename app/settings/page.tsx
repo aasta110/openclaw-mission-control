@@ -148,20 +148,20 @@ export default function SettingsPage() {
 
             <div className="relative p-6 space-y-5">
               <div>
-                <label className="block font-mono text-[10px] text-text-muted uppercase mb-2">
+                <label className="block font-mono text-[11px] text-text-secondary uppercase tracking-wider mb-2">
                   OpenClaw Gateway URL
                 </label>
                 <input
                   value={gatewayUrl}
                   onChange={(e) => setGatewayUrl(e.target.value)}
                   placeholder="http://localhost:4242"
-                  className="w-full rounded-2xl bg-white/4 border border-white/10 px-4 py-3 font-body text-sm text-text-primary outline-none focus:border-white/25"
+                  className="w-full rounded-2xl bg-white/2 border border-white/15 px-4 py-3 font-body text-sm text-text-primary placeholder:text-text-muted/70 outline-none focus:border-white/35 focus:bg-white/3"
                   disabled={loading}
                 />
               </div>
 
               <div>
-                <label className="block font-mono text-[10px] text-text-muted uppercase mb-2">
+                <label className="block font-mono text-[11px] text-text-secondary uppercase tracking-wider mb-2">
                   OpenClaw Gateway Token
                 </label>
                 <div className="flex gap-3">
@@ -170,7 +170,7 @@ export default function SettingsPage() {
                     onChange={(e) => setGatewayToken(e.target.value)}
                     placeholder={tokenPlaceholder}
                     type={revealToken ? "text" : "password"}
-                    className="flex-1 rounded-2xl bg-white/4 border border-white/10 px-4 py-3 font-body text-sm text-text-primary outline-none focus:border-white/25"
+                    className="flex-1 rounded-2xl bg-white/2 border border-white/15 px-4 py-3 font-body text-sm text-text-primary placeholder:text-text-muted/70 outline-none focus:border-white/35 focus:bg-white/3"
                     disabled={loading}
                   />
                   <button
@@ -189,20 +189,20 @@ export default function SettingsPage() {
                     Copy
                   </button>
                 </div>
-                <p className="font-body text-xs text-text-muted mt-2">
-                  Token is stored locally in <code className="font-mono">data/settings.local.json</code> and is gitignored.
+                <p className="font-body text-xs text-text-muted/90 mt-2">
+                  Token is stored locally in <code className="font-mono text-text-secondary">data/settings.local.json</code> and is gitignored.
                 </p>
               </div>
 
               <div>
-                <label className="block font-mono text-[10px] text-text-muted uppercase mb-2">
+                <label className="block font-mono text-[11px] text-text-secondary uppercase tracking-wider mb-2">
                   Clawbot WebSocket URL
                 </label>
                 <input
                   value={clawbotWsUrl}
                   onChange={(e) => setClawbotWsUrl(e.target.value)}
                   placeholder="wss://your-clawbot.example/ws"
-                  className="w-full rounded-2xl bg-white/4 border border-white/10 px-4 py-3 font-body text-sm text-text-primary outline-none focus:border-white/25"
+                  className="w-full rounded-2xl bg-white/2 border border-white/15 px-4 py-3 font-body text-sm text-text-primary placeholder:text-text-muted/70 outline-none focus:border-white/35 focus:bg-white/3"
                   disabled={loading}
                 />
               </div>
