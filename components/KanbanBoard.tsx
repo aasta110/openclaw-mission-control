@@ -276,7 +276,7 @@ export default function KanbanBoard({ initialTasks }: KanbanBoardProps) {
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}>
-        <div className="flex-1 overflow-x-auto pb-6">
+        <div id="kanban-scroll" className="flex-1 overflow-x-auto pb-6">
           <div className="flex gap-5 min-w-max px-6 pt-4">
             {COLUMNS.map((column) => (
               <KanbanColumn

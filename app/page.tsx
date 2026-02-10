@@ -38,6 +38,27 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // When the Activity sidebar opens/closes, nudge the kanban scroll so the right-most column
+  // (e.g. DONE) doesn't get hidden behind the sidebar on narrower desktops.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)"); // lg
+    if (!mq.matches) return;
+
+    const el = document.getElementById("kanban-scroll");
+    if (!el) return;
+
+    const delta = 360 + 24; // sidebar width + gap
+    const dir = activitySidebarOpen ? 1 : -1;
+
+    try {
+      // scrollBy keeps current position; moving content left = scroll right
+      (el as any).scrollBy?.({ left: dir * delta, behavior: "smooth" });
+    } catch {
+      el.scrollLeft = Math.max(0, el.scrollLeft + dir * delta);
+    }
+  }, [activitySidebarOpen]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
