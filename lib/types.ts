@@ -1,6 +1,4 @@
-import { AGENT_CONFIG, AgentId } from './config';
-
-export type { AgentId } from './config';
+export type AgentId = string;
 export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
 export type ReviewStatus = 'pending' | 'approved' | 'changes_requested';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -11,11 +9,11 @@ export type WorkLogAction = 'picked' | 'progress' | 'blocked' | 'completed' | 'd
 export interface Mention {
   id: string;
   taskId: string;
-  taskTitle: string;        // Denormalized for display
+  taskTitle: string; // Denormalized for display
   commentId: string;
-  author: string;           // Who wrote the comment
-  mentionedAgent: AgentId;  // Who was mentioned
-  content: string;          // The comment text
+  author: string; // Who wrote the comment
+  mentionedAgent: AgentId; // Who was mentioned
+  content: string; // The comment text
   createdAt: string;
   read: boolean;
 }
@@ -63,16 +61,16 @@ export interface Task {
   comments: Comment[];
   workLog: WorkLogEntry[];
   deliverable?: string; // DEPRECATED: Use deliverables instead. Kept for backward compatibility
-  deliverables?: string[]; // Array of file paths to the outputs
+  deliverables?: string[];
 
   // Review gate
-  reviewStatus?: ReviewStatus; // pending | approved | changes_requested
+  reviewStatus?: ReviewStatus;
   reviewedBy?: AgentId;
   reviewedAt?: string;
   reviewNotes?: string;
 
   // Orchestration
-  parentId?: string; // if set, this task is a child/subtask of parentId
+  parentId?: string;
 }
 
 export interface Agent {
@@ -86,7 +84,7 @@ export interface Agent {
   lastSeen: string;
 }
 
-// Serialized versions for API responses (same as base types since we use ISO strings now)
+// Serialized versions for API responses
 export interface SerializedComment {
   id: string;
   author: string;
@@ -117,15 +115,12 @@ export interface SerializedTask {
   tags: string[];
   comments: SerializedComment[];
   workLog: SerializedWorkLogEntry[];
-  deliverable?: string; // DEPRECATED: Use deliverables instead. Kept for backward compatibility
-  deliverables?: string[]; // Array of file paths to the outputs
-
-  // Review gate
+  deliverable?: string;
+  deliverables?: string[];
   reviewStatus?: ReviewStatus;
   reviewedBy?: AgentId;
   reviewedAt?: string;
   reviewNotes?: string;
-
   parentId?: string;
 }
 
@@ -140,7 +135,6 @@ export interface SerializedAgent {
   lastSeen: string;
 }
 
-// Column configuration for Kanban board
 export const COLUMNS: { id: TaskStatus; title: string }[] = [
   { id: 'backlog', title: 'Backlog' },
   { id: 'todo', title: 'Todo' },
@@ -149,10 +143,6 @@ export const COLUMNS: { id: TaskStatus; title: string }[] = [
   { id: 'done', title: 'Done' },
 ];
 
-// Agent configuration - derived from config.ts
-export const AGENTS: Omit<Agent, 'status' | 'currentTask' | 'lastSeen'>[] = [...AGENT_CONFIG.agents];
-
-// Priority colors
 export const PRIORITY_COLORS: Record<TaskPriority, { bg: string; text: string; border: string }> = {
   urgent: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500' },
   high: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500' },
@@ -160,10 +150,14 @@ export const PRIORITY_COLORS: Record<TaskPriority, { bg: string; text: string; b
   low: { bg: 'bg-gray-500/20', text: 'text-gray-400', border: 'border-gray-500' },
 };
 
-// Status colors
 export const STATUS_COLORS: Record<AgentStatus, { bg: string; text: string }> = {
   active: { bg: 'bg-green-500', text: 'text-green-400' },
   working: { bg: 'bg-blue-500', text: 'text-blue-400' },
   idle: { bg: 'bg-yellow-500', text: 'text-yellow-400' },
   offline: { bg: 'bg-gray-500', text: 'text-gray-400' },
 };
+
+// NOTE: UI components import AGENTS for avatar/name rendering.
+// In production this should likely come from the agents data store/API,
+// but exporting an empty list keeps the dev server compiling.
+export const AGENTS: Agent[] = [];
