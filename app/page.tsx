@@ -43,36 +43,42 @@ export default function DashboardPage() {
   // doesn't end up off-screen on narrower desktops.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(min-width: 1024px)"); // lg
-    if (!mq.matches) return;
 
     const el = document.getElementById("kanban-scroll") as HTMLDivElement | null;
     if (!el) return;
 
-    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+    const scrollToRightEdge = () => {
+      const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+      try {
+        el.scrollTo({ left: maxScrollLeft, behavior: "smooth" });
+      } catch {
+        el.scrollLeft = maxScrollLeft;
+      }
+    };
 
     if (activitySidebarOpen) {
-      // Save where the user was, then bias toward the far right so DONE stays visible.
+      // Save where the user was, then ensure DONE stays visible.
       kanbanScrollBeforeActivityRef.current = el.scrollLeft;
-      const target = maxScrollLeft;
+
+      // Do it now…
+      scrollToRightEdge();
+      // …and again after the sidebar width animation completes (clientWidth changes during the transition).
+      const t = window.setTimeout(scrollToRightEdge, 320);
+      return () => window.clearTimeout(t);
+    }
+
+    // Restore previous scroll position (clamped).
+    const prev = kanbanScrollBeforeActivityRef.current;
+    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+    if (typeof prev === "number") {
+      const target = Math.min(Math.max(0, prev), maxScrollLeft);
       try {
         el.scrollTo({ left: target, behavior: "smooth" });
       } catch {
         el.scrollLeft = target;
       }
-    } else {
-      // Restore previous scroll position (clamped).
-      const prev = kanbanScrollBeforeActivityRef.current;
-      if (typeof prev === "number") {
-        const target = Math.min(Math.max(0, prev), maxScrollLeft);
-        try {
-          el.scrollTo({ left: target, behavior: "smooth" });
-        } catch {
-          el.scrollLeft = target;
-        }
-      }
-      kanbanScrollBeforeActivityRef.current = null;
     }
+    kanbanScrollBeforeActivityRef.current = null;
   }, [activitySidebarOpen]);
 
   if (loading) {
