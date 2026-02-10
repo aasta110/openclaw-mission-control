@@ -161,10 +161,10 @@ export default function DashboardPage() {
             <KanbanBoard initialTasks={tasks} />
           </div>
 
-          {/* Desktop sidebar (animates width/opacity) */}
+          {/* Sidebar (animates width/opacity) */}
           <div
             className={
-              "hidden xl:block overflow-hidden transition-[width,opacity,transform] duration-300 ease-out " +
+              "hidden lg:block overflow-hidden transition-[width,opacity,transform] duration-300 ease-out " +
               (activitySidebarOpen
                 ? "w-[360px] opacity-100 translate-x-0"
                 : "w-0 opacity-0 translate-x-4 pointer-events-none")
@@ -172,12 +172,12 @@ export default function DashboardPage() {
             <ActivityLog variant="sidebar" className="w-[360px]" />
           </div>
 
-          {/* Mobile drawer */}
+          {/* Small-screen drawer */}
           <ActivityLog
             variant="drawer"
             open={activitySidebarOpen}
             onClose={() => setActivitySidebarOpen(false)}
-            className="xl:hidden"
+            className="lg:hidden"
           />
         </div>
       </div>
