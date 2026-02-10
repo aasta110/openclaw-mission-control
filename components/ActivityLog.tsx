@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 type MissionEvent = {
   id: string;
@@ -33,10 +34,12 @@ export default function ActivityLog({
   variant = 'sidebar',
   open = true,
   onClose,
+  className,
 }: {
   variant?: 'sidebar' | 'drawer';
   open?: boolean;
   onClose?: () => void;
+  className?: string;
 }) {
   const [events, setEvents] = useState<MissionEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +128,7 @@ export default function ActivityLog({
   if (variant === 'drawer') {
     if (!open) return null;
     return (
-      <div className="fixed inset-0 z-50">
+      <div className={cn('fixed inset-0 z-50', className)}>
         <button className="absolute inset-0 bg-black/45" aria-label="Close activity" onClick={onClose} />
         <div className="absolute top-0 right-0 h-full w-[420px] max-w-[92vw] p-4">
           {content}
@@ -135,8 +138,9 @@ export default function ActivityLog({
   }
 
   return (
-    <aside className="hidden xl:block w-[360px] shrink-0">
+    <aside className={cn('w-[360px] shrink-0', className)}>
       <div className="sticky top-0">{content}</div>
     </aside>
   );
 }
+

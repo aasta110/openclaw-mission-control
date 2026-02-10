@@ -10,10 +10,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Mobile/tablet drawer
-  const [activityOpen, setActivityOpen] = useState(false);
-
-  // Desktop sidebar toggle (so Activity doesn't block DONE column)
+  // Activity panel toggle (desktop: sidebar, mobile: drawer)
   const [activitySidebarOpen, setActivitySidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -130,39 +127,61 @@ export default function DashboardPage() {
     <div className="h-full flex flex-col min-h-0">
       {/* Scroll container so you can reach the bottom on smaller screens */}
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="flex gap-6 px-6 pb-6">
-          <div className="flex-1 min-w-0">
+        {/* Controls row */}
+        <div className="px-6 pt-6">
+          <div className="flex items-center justify-end">
+            <button
+              onClick={() => setActivitySidebarOpen((v) => !v)}
+              className="group px-4 py-2 rounded-xl bg-white/6 border border-white/10 hover:bg-white/10 transition-colors"
+              aria-pressed={activitySidebarOpen}
+              aria-label={activitySidebarOpen ? "Close activity" : "Open activity"}>
+              <span className="flex items-center gap-2">
+                <svg
+                  className="w-4 h-4 text-text-secondary group-hover:text-text-primary transition-colors"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2">
+                  <path
+                    d="M5 12h4l2 5 2-10 2 5h4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="font-body text-xs text-text-secondary group-hover:text-text-primary transition-colors">
+                  {activitySidebarOpen ? "Hide activity" : "Show activity"}
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-6 px-6 pb-6 pt-4">
+          <div className="flex-1 min-w-0 transition-[width] duration-300">
             <KanbanBoard initialTasks={tasks} />
           </div>
 
-          {/* Desktop sidebar (toggleable) */}
-          {activitySidebarOpen && <ActivityLog />}
+          {/* Desktop sidebar (animates width/opacity) */}
+          <div
+            className={
+              "hidden xl:block overflow-hidden transition-[width,opacity,transform] duration-300 ease-out " +
+              (activitySidebarOpen
+                ? "w-[360px] opacity-100 translate-x-0"
+                : "w-0 opacity-0 translate-x-4 pointer-events-none")
+            }>
+            <ActivityLog variant="sidebar" className="w-[360px]" />
+          </div>
+
+          {/* Mobile drawer */}
+          <ActivityLog
+            variant="drawer"
+            open={activitySidebarOpen}
+            onClose={() => setActivitySidebarOpen(false)}
+            className="xl:hidden"
+          />
         </div>
       </div>
-
-      {/* Floating button to open Activity drawer (mobile/tablet) */}
-      <button
-        onClick={() => setActivityOpen(true)}
-        className="fixed right-4 top-24 z-40 xl:hidden px-3 py-2 rounded-xl bg-abyss/60 border border-elevated/40 hover:bg-abyss/80 transition-colors font-mono text-[11px] text-text-secondary uppercase tracking-wider"
-      >
-        Activity
-      </button>
-
-      {/* Desktop toggle button to show/hide Activity sidebar */}
-      <button
-        onClick={() => setActivitySidebarOpen((v) => !v)}
-        className="fixed right-4 top-24 z-40 hidden xl:block px-3 py-2 rounded-xl bg-abyss/60 border border-elevated/40 hover:bg-abyss/80 transition-colors font-mono text-[11px] text-text-secondary uppercase tracking-wider"
-        title={activitySidebarOpen ? 'Hide activity' : 'Show activity'}
-      >
-        {activitySidebarOpen ? 'Hide activity' : 'Show activity'}
-      </button>
-
-      {/* Slide-out drawer (mobile/tablet) */}
-      <ActivityLog
-        variant="drawer"
-        open={activityOpen}
-        onClose={() => setActivityOpen(false)}
-      />
     </div>
   );
 }
+
