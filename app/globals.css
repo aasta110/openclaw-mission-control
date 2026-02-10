@@ -799,6 +799,9 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+  .theme {
+    --animate-pulse-slow: pulse-slow 3s ease-in-out infinite;
+  }
 }
 
 @layer base {
@@ -817,6 +820,14 @@ body {
     }
   50% {
     transform: translateY(-10px);
+    }
+  }
+  @keyframes pulse-slow {
+  0%, 100% {
+    transform: translateX(-100%);
+    }
+  50% {
+    transform: translateX(100%);
     }
   }
 }

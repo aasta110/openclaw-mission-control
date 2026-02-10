@@ -144,7 +144,7 @@ module.exports = {
   		backgroundImage: {
   			'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
   			'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-  			'cyber-grid': '`\r\n          linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),\r\n          linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px)\r\n        `',
+  			'cyber-grid': '`\\\\r\\\\n          linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),\\\\r\\\\n          linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px)\\\\r\\\\n        `',
   			holographic: 'linear-gradient(135deg, rgba(0, 245, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 50%, rgba(139, 92, 246, 0.1) 100%)'
   		},
   		animation: {
@@ -152,7 +152,8 @@ module.exports = {
   			float: 'float 6s ease-in-out infinite',
   			shimmer: 'shimmer 3s infinite',
   			'spin-slow': 'spin 3s linear infinite',
-  			'gradient-rotate': 'gradient-rotate 4s linear infinite'
+  			'gradient-rotate': 'gradient-rotate 4s linear infinite',
+  			'pulse-slow': 'pulse-slow 3s ease-in-out infinite'
   		},
   		keyframes: {
   			'pulse-glow': {
@@ -176,6 +177,14 @@ module.exports = {
   					transform: 'translateX(-100%)'
   				},
   				'100%': {
+  					transform: 'translateX(100%)'
+  				}
+  			},
+  			'pulse-slow': {
+  				'0%, 100%': {
+  					transform: 'translateX(-100%)'
+  				},
+  				'50%': {
   					transform: 'translateX(100%)'
   				}
   			}
