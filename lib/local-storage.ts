@@ -14,8 +14,8 @@ import {
   WorkLogAction,
   Comment,
   WorkLogEntry,
-  AGENTS,
 } from "./types";
+import { ensureConsumerAgents } from "./seed-consumer-agents";
 import { AGENT_CONFIG } from "./config";
 import { v4 as uuidv4 } from "uuid";
 
@@ -706,7 +706,7 @@ export async function seedAgents(): Promise<void> {
   let changed = false;
   const now = new Date().toISOString();
 
-  for (const agent of AGENTS) {
+  for (const agent of AGENT_CONFIG.agents) {
     const existing = byId.get(agent.id);
 
     if (!existing) {

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { SerializedTask } from "@/lib/types";
 import KanbanBoard from "@/components/KanbanBoard";
 import ActivityLog from "@/components/ActivityLog";
+import OnboardingWizard from "@/components/OnboardingWizard";
+import UsageBar from "@/components/UsageBar";
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<SerializedTask[]>([]);
@@ -168,6 +170,8 @@ export default function DashboardPage() {
 
   return (
     <div className="h-full flex flex-col min-h-0">
+      <OnboardingWizard onDone={() => window.location.reload()} />
+
       {/* Scroll container so you can reach the bottom on smaller screens */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         {/* Controls row */}
