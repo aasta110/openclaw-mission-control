@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { addComment, createTask, getTasks, serializeTask, updateTask } from '@/lib/local-storage';
+import { reserveEur, commitReservation } from '@/lib/budget';
 import { AgentId, TaskPriority, TaskStatus } from '@/lib/types';
 import { AGENT_CONFIG } from '@/lib/config';
 
@@ -92,6 +93,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+
     const { title, description, priority, assignee, createdBy, tags, dueDate } = body;
 
     if (!title || !description || !priority || !createdBy) {
@@ -108,6 +110,21 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Safety & limits enforcer (v0): refuse creating new work when the budget is locked or exhausted.
+    // NOTE: This is a placeholder until OpenClaw-side per-request costing is wired in.
+    const estEur = 0.01; // conservative estimate per task creation
+    const reservation = await reserveEur(estEur, 'Create task (estimate)', { endpoint: '/api/tasks' });
+    if (!reservation.ok) {
+      return NextResponse.json(
+        { success: false, error: reservation.error, budget: reservation.budget },
+        { status: 402 },
+      );
+    }
+    // Commit immediately for now (we don't yet have async costing).
+    await commitReservation(reservation.reservationId, estEur, 'Create task (committed estimate)', {
+      endpoint: '/api/tasks',
+    });
 
     // Idempotency guard (prevents duplicate missions created by cron/user double-submit)
     // If this is an Atlas parent mission request and an equivalent mission was created very recently,

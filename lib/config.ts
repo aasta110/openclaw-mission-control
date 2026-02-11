@@ -2,7 +2,7 @@
 //
 // Constraints:
 // - Leader AI is always present.
-// - Up to 11 Worker AIs can be enabled depending on the user's tier.
+// - Up to 10 Worker AIs can be enabled depending on the user's tier (11 agents total).
 // - The UI must not expose model selection.
 //
 // IMPORTANT: Agent IDs here are the IDs Mission Control assigns tasks to.
@@ -11,24 +11,26 @@
 
 export const AGENT_CONFIG = {
   brand: {
-    name: 'Multi Ai',
-    subtitle: 'Your AI team in one place',
+    name: 'ClawBot',
+    subtitle: 'Your AI team in Mission Control',
   },
 
+  // Canonical 11-agent topology
   agents: [
-    { id: 'leader', name: 'Leader', emoji: '🧭', role: 'Leader AI', focus: 'Plans, assigns, summarizes' },
+    { id: 'main', name: 'Leader', emoji: '🧭', role: 'Leader/Orchestrator', focus: 'Plans, assigns, reviews, summarizes' },
 
-    { id: 'worker1', name: 'Worker 1', emoji: '①', role: 'Worker AI', focus: 'Role template driven' },
-    { id: 'worker2', name: 'Worker 2', emoji: '②', role: 'Worker AI', focus: 'Role template driven' },
-    { id: 'worker3', name: 'Worker 3', emoji: '③', role: 'Worker AI', focus: 'Role template driven' },
-    { id: 'worker4', name: 'Worker 4', emoji: '④', role: 'Worker AI', focus: 'Role template driven' },
-    { id: 'worker5', name: 'Worker 5', emoji: '⑤', role: 'Worker AI', focus: 'Role template driven' },
-    { id: 'worker6', name: 'Worker 6', emoji: '⑥', role: 'Worker AI', focus: 'Role template driven' },
-    { id: 'worker7', name: 'Worker 7', emoji: '⑦', role: 'Worker AI', focus: 'Role template driven' },
-    { id: 'worker8', name: 'Worker 8', emoji: '⑧', role: 'Worker AI', focus: 'Role template driven' },
-    { id: 'worker9', name: 'Worker 9', emoji: '⑨', role: 'Worker AI', focus: 'Role template driven' },
-    { id: 'worker10', name: 'Worker 10', emoji: '⑩', role: 'Worker AI', focus: 'Role template driven' },
-    { id: 'worker11', name: 'Worker 11', emoji: '⑪', role: 'Worker AI', focus: 'Role template driven' },
+    { id: 'claude1', name: 'Backend', emoji: '🧱', role: 'Backend Engineer', focus: 'APIs, data model, integrations' },
+    { id: 'claude2', name: 'Frontend', emoji: '🖥️', role: 'Frontend Engineer', focus: 'UI, components, UX implementation' },
+    { id: 'claude3', name: 'Sec/DevOps', emoji: '🛡️', role: 'Security & DevOps', focus: 'Threat model, hardening, deployment' },
+
+    { id: 'tanel', name: 'PM', emoji: '🗺️', role: 'Product/Project Manager', focus: 'Milestones, scope, acceptance criteria' },
+
+    { id: 'gpt4research', name: 'Research', emoji: '🔎', role: 'Market Research', focus: 'Benchmarks, competitors, references' },
+    { id: 'gpt4writing', name: 'Copy', emoji: '✍️', role: 'Copywriting', focus: 'Onboarding copy, product text, docs tone' },
+    { id: 'gpt4ux', name: 'UX', emoji: '🧩', role: 'UX Designer', focus: 'Flows, edge cases, IA' },
+    { id: 'gpt4seo', name: 'SEO', emoji: '📈', role: 'SEO Specialist', focus: 'Public web presence & discoverability' },
+    { id: 'gpt4data', name: 'Data', emoji: '📊', role: 'Usage/Cost Intelligence', focus: 'Telemetry, cost, budgets' },
+    { id: 'gpt4test', name: 'QA', emoji: '🧪', role: 'QA/Critic', focus: 'Test plans, regression, critique' },
   ] as const,
 };
 
